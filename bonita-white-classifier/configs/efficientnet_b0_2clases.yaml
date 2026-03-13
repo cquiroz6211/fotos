@@ -1,0 +1,65 @@
+# Configuración del modelo EfficientNet-B0 para 2 clases (Estado 0 y Estado 1)
+
+model:
+  name: "efficientnet_b0"
+  num_classes: 2
+  pretrained: true
+  dropout_rate: 0.3
+  freeze_base: false
+  
+# Mapeo de clases
+class_mapping:
+  0: "Estado_0_Prefloracion"
+  1: "Estado_1_Floracion_Intermedia"
+  
+# Mapeo de días a clases
+day_to_class:
+  dia1-4: 0  # Estado 0
+  dia5-8: 1  # Estado 1
+  dia9-11: 2 # Estado 2 (no disponible aún)
+
+# Parámetros de entrenamiento
+training:
+  num_epochs: 30
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  optimizer: "adamw"
+  scheduler: "cosine"
+  warmup_epochs: 3
+  early_stopping_patience: 10
+  grad_clip: 1.0
+  use_class_weights: true  # Balancear clases
+  
+# Parámetros de datos
+data:
+  splits_dir: "data/splits"
+  batch_size: 16
+  num_workers: 2
+  image_size: 224
+  pin_memory: false
+  
+# Data Augmentation
+augmentation:
+  train:
+    horizontal_flip: 0.5
+    rotation: 15
+    brightness: 0.2
+    contrast: 0.2
+    saturation: 0.2
+    hue: 0.1
+    random_crop: true
+  val:
+    center_crop: true
+  test:
+    center_crop: true
+
+# Checkpoints y logging
+checkpoint:
+  save_dir: "checkpoints"
+  save_best_only: true
+  save_every: 5
+  
+logging:
+  log_dir: "logs"
+  tensorboard: true
+  log_interval: 10

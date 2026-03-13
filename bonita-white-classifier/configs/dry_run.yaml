@@ -1,0 +1,33 @@
+# Configuración ligera para dry run
+
+model:
+  name: "efficientnet_b0"
+  num_classes: 3
+  pretrained: true
+  dropout_rate: 0.3
+  freeze_base: false
+
+data:
+  splits_dir: "data/splits"
+  batch_size: 8
+  num_workers: 0
+  image_size: 224
+  pin_memory: false
+
+training:
+  num_epochs: 3
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  optimizer: "adamw"
+  scheduler: "cosine"
+  use_class_weights: false
+  early_stopping_patience: 10
+  grad_clip: 1.0
+
+logging:
+  log_dir: "logs"
+  tensorboard: true
+
+checkpoint:
+  save_dir: "checkpoints"
+  save_every: 10

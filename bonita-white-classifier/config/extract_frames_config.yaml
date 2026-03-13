@@ -1,0 +1,61 @@
+# Frame Extraction Configuration for Bonita White Classification
+
+# Directory paths
+video_dir: bonita-white-classifier/data/raw/videos
+output_dir: bonita-white-classifier/data/processed/frames
+log_dir: bonita-white-classifier/logs
+
+# Frame extraction settings
+# Extract mode: 'seconds' (every N seconds) or 'frames' (every N frames)
+extract_mode: 'seconds'
+interval: 1  # Extract every 1 second (or frame if mode is 'frames')
+max_frames: null  # Maximum frames per video (null = no limit)
+
+# Frame processing
+resize_size: [224, 224]  # Target size for EfficientNet-B0 (width, height)
+min_confidence: 0.5  # Minimum confidence threshold (for future use)
+
+# Class mapping
+# Maps patterns in video filenames to class folder names
+class_mapping:
+  prefloracion: 'Estado_0_Prefloracion'
+  floracion_intermedia: 'Estado_1_Floracion_Intermedia'
+  floracion_maxima: 'Estado_2_Floracion_Maxima'
+
+# Additional patterns can be added as needed:
+# class_mapping:
+#   '0_prefloracion': 'Estado_0_Prefloracion'
+#   '1_intermedia': 'Estado_1_Floracion_Intermedia'
+#   '2_maxima': 'Estado_2_Floracion_Maxima'
+#   'stage0': 'Estado_0_Prefloracion'
+#   'stage1': 'Estado_1_Floracion_Intermedia'
+#   'stage2': 'Estado_2_Floracion_Maxima'
+
+# Parallel processing
+workers: 4  # Number of parallel workers
+
+# Video file extensions to process
+video_extensions:
+  - '.mp4'
+  - '.avi'
+  - '.mov'
+  - '.mkv'
+  - '.webm'
+
+# Image quality for saved frames
+jpeg_quality: 95
+
+# Logging configuration
+log_level: 'INFO'  # DEBUG, INFO, WARNING, ERROR
+
+# Data organization
+# Output structure will be:
+# output_dir/
+#   ├── Estado_0_Prefloracion/
+#   │   ├── video1_frame_000001.jpg
+#   │   ├── video1_frame_000005.jpg
+#   │   └── ...
+#   ├── Estado_1_Floracion_Intermedia/
+#   │   └── ...
+#   └── Estado_2_Floracion_Maxima/
+#       └── ...
