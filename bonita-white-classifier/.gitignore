@@ -63,6 +63,11 @@ output/
 results/
 predictions/
 
+# Modelos binarios (muy grandes, se regeneran localmente)
+models/*.onnx
+models/*.onnx.data
+models/*.blob
+
 # Videos (archivos muy grandes)
 *.mp4
 *.MP4
@@ -76,3 +81,4 @@ predictions/
 
 # Configs con credenciales
 configs/credentials.yaml
+data

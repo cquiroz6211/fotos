@@ -106,34 +106,30 @@ def get_video_files(
     return sorted([str(f) for f in video_files])
 
 
-def determine_class_from_path(video_path: str, class_mapping: dict) -> Optional[str]:
+def determine_class_from_path(video_path: str, class_mapping: dict) -> str:
     """
     Determine the class label based on video path, filename, or parent folder.
 
-    For Bonita White project, uses folder names like 'dia1-4', 'dia5-8', 'dia9-11'
-    to determine the phenological state class.
+    For Bonita White project, uses patterns like 'dia1', 'dia2', etc. in folder names
+    or filenames to determine the day class.
 
     Args:
         video_path: Path to video file
-        class_mapping: Dictionary mapping patterns to class names
+        class_mapping: Dictionary mapping patterns to class names (from config)
 
     Returns:
-        Class name or None if no match found
+        Class name determined from path or filename
+
+    Raises:
+        ValueError: If no class can be determined from the path
     """
     video_path_lower = video_path.lower()
     filename = os.path.basename(video_path_lower)
     parent_folder = os.path.basename(os.path.dirname(video_path_lower))
 
-    # Folder-based mapping for Bonita White project
-    folder_to_class = {
-        "dia1-4": "Estado_0_Prefloracion",
-        "dia5-8": "Estado_1_Floracion_Intermedia",
-        "dia9-11": "Estado_2_Floracion_Maxima",
-    }
-
-    # Check parent folder first (highest priority)
-    for folder_pattern, class_name in folder_to_class.items():
-        if folder_pattern in parent_folder:
+    # Try to match patterns from config in parent folder first (highest priority)
+    for pattern, class_name in class_mapping.items():
+        if pattern.lower() in parent_folder:
             return class_name
 
     # Fallback to filename matching
@@ -141,7 +137,12 @@ def determine_class_from_path(video_path: str, class_mapping: dict) -> Optional[
         if pattern.lower() in filename:
             return class_name
 
-    return None
+    # No match found - raise error with clear message
+    raise ValueError(
+        f"Could not determine class for video: {video_path}. "
+        f"Parent folder: '{parent_folder}', Filename: '{filename}'. "
+        f"Expected one of these patterns in folder or filename: {list(class_mapping.keys())}"
+    )
 
 
 def resize_frame(
@@ -338,10 +339,10 @@ def process_videos_parallel(
         # Submit all tasks
         futures = {}
         for video_path in video_paths:
-            class_name = determine_class_from_path(video_path, class_mapping)
-
-            if class_name is None:
-                logger.warning(f"Could not determine class for: {video_path}, skipping")
+            try:
+                class_name = determine_class_from_path(video_path, class_mapping)
+            except ValueError as e:
+                logger.warning(str(e))
                 overall_stats["failed"] += 1
                 overall_stats["failed_videos"].append(video_path)
                 continue

@@ -17,19 +17,20 @@ min_confidence: 0.5  # Minimum confidence threshold (for future use)
 
 # Class mapping
 # Maps patterns in video filenames to class folder names
+# Note: Dia_6 is skipped - the crop did not open that day
+# IMPORTANT: More specific patterns (dia10, dia11) must come BEFORE general patterns (dia1)
+# to avoid substring matching issues
 class_mapping:
-  prefloracion: 'Estado_0_Prefloracion'
-  floracion_intermedia: 'Estado_1_Floracion_Intermedia'
-  floracion_maxima: 'Estado_2_Floracion_Maxima'
-
-# Additional patterns can be added as needed:
-# class_mapping:
-#   '0_prefloracion': 'Estado_0_Prefloracion'
-#   '1_intermedia': 'Estado_1_Floracion_Intermedia'
-#   '2_maxima': 'Estado_2_Floracion_Maxima'
-#   'stage0': 'Estado_0_Prefloracion'
-#   'stage1': 'Estado_1_Floracion_Intermedia'
-#   'stage2': 'Estado_2_Floracion_Maxima'
+  dia11: 'Dia_11'
+  dia10: 'Dia_10'
+  dia9: 'Dia_9'
+  dia8: 'Dia_8'
+  dia7: 'Dia_7'
+  dia5: 'Dia_5'
+  dia4: 'Dia_4'
+  dia3: 'Dia_3'
+  dia2: 'Dia_2'
+  dia1: 'Dia_1'
 
 # Parallel processing
 workers: 4  # Number of parallel workers
@@ -51,11 +52,13 @@ log_level: 'INFO'  # DEBUG, INFO, WARNING, ERROR
 # Data organization
 # Output structure will be:
 # output_dir/
-#   ├── Estado_0_Prefloracion/
+#   ├── Dia_1/
 #   │   ├── video1_frame_000001.jpg
 #   │   ├── video1_frame_000005.jpg
 #   │   └── ...
-#   ├── Estado_1_Floracion_Intermedia/
+#   ├── Dia_2/
 #   │   └── ...
-#   └── Estado_2_Floracion_Maxima/
+#   ├── ...
+#   └── Dia_11/
 #       └── ...
+# Note: Dia_6 is skipped - the crop did not open that day

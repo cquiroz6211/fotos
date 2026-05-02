@@ -2,23 +2,37 @@
 
 model:
   name: "mobilenet_v3_small"
-  num_classes: 3
+  num_classes: 10
   pretrained: true
   dropout_rate: 0.2  # Más bajo que EfficientNet (modelo más pequeño)
   freeze_base: false
   variant: "small"
 
-# Mapeo de clases
+# Mapeo de clases (10 clases - un día por clase)
 class_mapping:
-  0: "Estado_0_Prefloracion"
-  1: "Estado_1_Floracion_Intermedia"
-  2: "Estado_2_Floracion_Maxima"
+  0: "Dia_1"
+  1: "Dia_2"
+  2: "Dia_3"
+  3: "Dia_4"
+  4: "Dia_5"
+  5: "Dia_7"
+  6: "Dia_8"
+  7: "Dia_9"
+  8: "Dia_10"
+  9: "Dia_11"
 
-# Mapeo de días a clases
+# Mapeo de días a clases (directo - cada día es su propia clase)
 day_to_class:
-  dia1-4: 0   # Estado 0
-  dia5-8: 1   # Estado 1
-  dia9-11: 2  # Estado 2
+  1: 0   # Dia_1
+  2: 1   # Dia_2
+  3: 2   # Dia_3
+  4: 3   # Dia_4
+  5: 4   # Dia_5
+  7: 5   # Dia_7
+  8: 6   # Dia_8
+  9: 7   # Dia_9
+  10: 8  # Dia_10
+  11: 9  # Dia_11
 
 # Parámetros de entrenamiento
 training:

@@ -68,10 +68,9 @@ class VideoProcessor:
         device: Dispositivo para inferencia ('cpu', 'cuda', etc.)
         frame_interval: Procesar 1 frame cada N (default: 30 = 1 frame/segundo a 30fps)
         confidence_threshold: Umbral minimo de confianza para considerar prediccion valida
+        state_names: Diccionario mapeando indice de clase a nombre legible.
+                     Si es None, se generan nombres genericos "Clase 0", "Clase 1", etc.
     """
-
-    # Nombres de estados para reportes
-    STATE_NAMES = {0: "Prefloracion", 1: "Floracion Intermedia", 2: "Floracion Maxima"}
 
     def __init__(
         self,
@@ -79,6 +78,7 @@ class VideoProcessor:
         device: str = "cpu",
         frame_interval: int = 30,
         confidence_threshold: float = 0.5,
+        state_names: Optional[Dict[int, str]] = None,
     ):
         self.model = model
         self.device = torch.device(device)
@@ -88,10 +88,30 @@ class VideoProcessor:
         self.frame_interval = frame_interval
         self.confidence_threshold = confidence_threshold
 
+        # Configurar nombres de estados (dinamico, no hardcodeado)
+        self.state_names = state_names if state_names is not None else {}
+
         logger.info(
             f"VideoProcessor inicializado: device={device}, "
-            f"frame_interval={frame_interval}"
+            f"frame_interval={frame_interval}, "
+            f"num_classes={len(self.state_names) if self.state_names else 'auto'}"
         )
+
+    def get_state_name(self, class_index: int) -> str:
+        """
+        Obtiene el nombre legible para un indice de clase.
+
+        Si no hay nombre configurado, genera uno generico.
+
+        Args:
+            class_index: Indice de la clase
+
+        Returns:
+            Nombre legible de la clase
+        """
+        if class_index in self.state_names:
+            return self.state_names[class_index]
+        return f"Clase {class_index}"
 
     def preprocess_frame(self, frame: np.ndarray) -> torch.Tensor:
         """
@@ -270,23 +290,23 @@ class VideoProcessor:
                     )
                 )
 
-        # Crear timeline DataFrame
-        timeline_data = pd.DataFrame(
-            [
-                {
-                    "timestamp": p.timestamp,
-                    "timestamp_formatted": str(timedelta(seconds=int(p.timestamp))),
-                    "frame": p.frame_number,
-                    "predicted_state": p.predicted_class,
-                    "state_name": self.STATE_NAMES[p.predicted_class],
-                    "confidence": p.confidence,
-                    "prob_state_0": p.probabilities[0],
-                    "prob_state_1": p.probabilities[1],
-                    "prob_state_2": p.probabilities[2],
-                }
-                for p in predictions
-            ]
-        )
+        # Crear timeline DataFrame con columnas dinamicas
+        timeline_rows = []
+        for p in predictions:
+            row = {
+                "timestamp": p.timestamp,
+                "timestamp_formatted": str(timedelta(seconds=int(p.timestamp))),
+                "frame": p.frame_number,
+                "predicted_state": p.predicted_class,
+                "state_name": self.get_state_name(p.predicted_class),
+                "confidence": p.confidence,
+            }
+            # Agregar columnas de probabilidad dinamicamente
+            for i, prob in enumerate(p.probabilities):
+                row[f"prob_state_{i}"] = prob
+            timeline_rows.append(row)
+
+        timeline_data = pd.DataFrame(timeline_rows)
 
         return VideoAnalysisResult(
             video_path=video_path,
@@ -331,11 +351,11 @@ class VideoProcessor:
         report.append("-" * 60)
         report.append("RESULTADOS DEL ANALISIS")
         report.append("-" * 60)
-        report.append(f"Estado predominante: {self.STATE_NAMES[result.dominant_state]}")
+        report.append(f"Estado predominante: {self.get_state_name(result.dominant_state)}")
         report.append("")
         report.append("Distribucion de estados:")
         for state, pct in sorted(result.state_distribution.items()):
-            report.append(f"  {self.STATE_NAMES[state]}: {pct:.1f}%")
+            report.append(f"  {self.get_state_name(state)}: {pct:.1f}%")
         report.append("")
         report.append(f"Confianza promedio: {result.confidence_mean:.2%}")
         report.append(f"Desviacion estandar: {result.confidence_std:.2%}")
@@ -348,8 +368,8 @@ class VideoProcessor:
             for timestamp, from_state, to_state in result.state_transitions:
                 time_str = str(timedelta(seconds=int(timestamp)))
                 report.append(
-                    f"  {time_str}: {self.STATE_NAMES[from_state]} -> "
-                    f"{self.STATE_NAMES[to_state]}"
+                    f"  {time_str}: {self.get_state_name(from_state)} -> "
+                    f"{self.get_state_name(to_state)}"
                 )
             report.append("")
 
@@ -381,7 +401,7 @@ class VideoProcessor:
                     Path(result.video_path).name,
                     result.duration_seconds,
                     result.processed_frames,
-                    self.STATE_NAMES[result.dominant_state],
+                    self.get_state_name(result.dominant_state),
                     f"{result.confidence_mean:.2%}",
                 ],
             }
@@ -392,7 +412,7 @@ class VideoProcessor:
             # Hoja 3: Distribucion
             dist_data = {
                 "Estado": [
-                    self.STATE_NAMES[s] for s in result.state_distribution.keys()
+                    self.get_state_name(s) for s in result.state_distribution.keys()
                 ],
                 "Porcentaje": list(result.state_distribution.values()),
             }
@@ -407,6 +427,7 @@ def create_video_processor(
     checkpoint_path: str = "checkpoints/best_model.pth",
     device: str = "cpu",
     frame_interval: int = 30,
+    state_names: Optional[Dict[int, str]] = None,
 ) -> VideoProcessor:
     """
     Factory function para crear un VideoProcessor con modelo cargado.
@@ -415,6 +436,8 @@ def create_video_processor(
         checkpoint_path: Ruta al checkpoint del modelo
         device: Dispositivo para inferencia
         frame_interval: Intervalo entre frames a procesar
+        state_names: Diccionario mapeando indice de clase a nombre legible.
+                     Ejemplo: {0: "Prefloracion", 1: "Floracion Intermedia", ...}
 
     Returns:
         VideoProcessor configurado y listo para usar
@@ -424,4 +447,9 @@ def create_video_processor(
     logger.info(f"Cargando modelo desde: {checkpoint_path}")
     model, info = EfficientNetClassifier.load_checkpoint(checkpoint_path, device=device)
 
-    return VideoProcessor(model=model, device=device, frame_interval=frame_interval)
+    return VideoProcessor(
+        model=model,
+        device=device,
+        frame_interval=frame_interval,
+        state_names=state_names,
+    )

@@ -1,0 +1,7 @@
+# Archivos de video/imágenes del dron (muy pesados)
+videofotosDron/
+
+# Modelos binarios (se regeneran localmente)
+*.onnx
+*.onnx.data
+*.blob

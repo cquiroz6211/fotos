@@ -29,6 +29,15 @@ pyyaml>=6.0
 tensorboard>=2.13.0
 wandb>=0.15.0
 
+# ONNX Export
+onnx>=1.14.0
+onnxruntime>=1.16.0
+
+# OAK-1 Deployment (Luxonis)
+depthai>=2.24.0
+blobconverter>=1.6.0
+openvino-dev>=2021.4
+
 # Utilities
 tqdm>=4.65.0
 pathlib>=1.0.0

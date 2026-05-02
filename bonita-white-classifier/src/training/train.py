@@ -40,11 +40,12 @@ def train_epoch(
     criterion: torch.nn.Module,
     optimizer: torch.optim.Optimizer,
     device: torch.device,
+    num_classes: int = 3,
     grad_clip: float = 1.0,
 ) -> dict:
     """Train for one epoch."""
     model.train()
-    tracker = MetricsTracker(num_classes=3)
+    tracker = MetricsTracker(num_classes=num_classes)
 
     for batch_idx, (images, labels) in enumerate(dataloader):
         images = images.to(device)
@@ -76,10 +77,11 @@ def validate_epoch(
     dataloader: torch.utils.data.DataLoader,
     criterion: torch.nn.Module,
     device: torch.device,
+    num_classes: int = 3,
 ) -> dict:
     """Validate for one epoch."""
     model.eval()
-    tracker = MetricsTracker(num_classes=3)
+    tracker = MetricsTracker(num_classes=num_classes)
 
     with torch.no_grad():
         for images, labels in dataloader:
@@ -137,9 +139,10 @@ def train(config: dict, model_name: str, resume_from: str = None, debug: bool = 
     # Create model
     logger.info(f"Creating model: {model_name}")
     model_config = config.get("model", {})
+    num_classes = model_config.get("num_classes", 3)
     model = create_model(
         model_name=model_name,
-        num_classes=model_config.get("num_classes", 3),
+        num_classes=num_classes,
         dropout_rate=model_config.get("dropout_rate", 0.3),
         pretrained=model_config.get("pretrained", True),
         freeze_base=model_config.get("freeze_base", False),
@@ -165,7 +168,7 @@ def train(config: dict, model_name: str, resume_from: str = None, debug: bool = 
             all_labels.extend(labels.numpy())
         from utils.metrics import compute_class_weights
 
-        class_weights = compute_class_weights(all_labels, num_classes=3)
+        class_weights = compute_class_weights(all_labels, num_classes=num_classes)
         class_weights = class_weights.to(device)
         logger.info(f"Using class weights: {class_weights}")
 
@@ -223,7 +226,7 @@ def train(config: dict, model_name: str, resume_from: str = None, debug: bool = 
         logger.info(f"\nEpoch {epoch + 1}/{num_epochs}")
 
         # Train
-        train_metrics = train_epoch(model, train_loader, criterion, optimizer, device)
+        train_metrics = train_epoch(model, train_loader, criterion, optimizer, device, num_classes=num_classes)
         logger.info(
             f"Train - Loss: {train_metrics['loss']:.4f}, Acc: {train_metrics['accuracy']:.4f}"
         )
@@ -231,7 +234,7 @@ def train(config: dict, model_name: str, resume_from: str = None, debug: bool = 
         # Validate
         val_metrics = None
         if val_loader:
-            val_metrics = validate_epoch(model, val_loader, criterion, device)
+            val_metrics = validate_epoch(model, val_loader, criterion, device, num_classes=num_classes)
             logger.info(
                 f"Val   - Loss: {val_metrics['loss']:.4f}, Acc: {val_metrics['accuracy']:.4f}"
             )
