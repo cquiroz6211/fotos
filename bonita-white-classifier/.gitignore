@@ -19,7 +19,8 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
+.atl
+ARTICULO_CIENTIFICO.md
 # Virtual Environment
 venv/
 env/
